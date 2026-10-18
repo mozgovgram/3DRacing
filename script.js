@@ -5,7 +5,7 @@ if (tg) tg.expand();
 const tgUser = tg?.initDataUnsafe?.user || { id: 12345678, username: "TestPlayer" };
 
 // Твоя ссылка на Google Apps Script
-const SERVER_URL = "https://script.google.com/macros/s/AKfycbyxz6-MFjo9y5hRQIOZafg2AKP8tavzmSki-RwIgkI_hwSgPGFM2TC49ZhOCG9UhGOK/exec";
+const SERVER_URL = "https://script.google.com/macros/s/AKfycby0Fv6EbSa9xn6fntoN_Xgcl6sBwKfl2_azYQHSONSt2QSG_S-qSS6NRvRNz61WmKMM/exec";
 
 function vibrate(style = 'light') {
     if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred(style);
