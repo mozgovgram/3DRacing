@@ -1,0 +1,294 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background-color: #060810;
+    color: #ffffff;
+    overflow: hidden;
+    touch-action: none;
+    width: 100vw;
+    height: 100vh;
+}
+
+.screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+    background-color: #060810;
+}
+
+.hidden {
+    display: none !important;
+}
+
+#bet-screen {
+    z-index: 20;
+}
+
+/* --- 1. НОВАЯ ПАНЕЛЬ БАЛАНСА И КНОПОК ФИНАНСОВ --- */
+.header-panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: #111827;
+    border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+}
+
+.balance-badge {
+    font-size: 16px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.finance-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.finance-actions button {
+    background: rgba(0, 240, 255, 0.1);
+    color: #00f0ff;
+    border: 1px solid #00f0ff;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.finance-actions button:active {
+    background: #00f0ff;
+    color: #060810;
+    transform: scale(0.95);
+}
+/* ------------------------------------------------ */
+
+.main-title {
+    font-size: 20px;
+    font-weight: 900;
+    text-align: center;
+    padding: 15px 0 10px 0;
+    letter-spacing: 2px;
+    color: #ffffff;
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+}
+
+.roach-grid {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.roach-grid::-webkit-scrollbar {
+    display: none;
+}
+
+.roach-item {
+    background: rgba(20, 25, 40, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.roach-item.selected {
+    background: rgba(30, 40, 60, 0.9);
+    border: 1px solid #00f0ff;
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+}
+
+.roach-avatar {
+    width: 50px;
+    height: 50px;
+    background-color: #0b0f19;
+    border-radius: 8px;
+    margin-right: 12px;
+    background-size: 200% 200%;
+    background-position: 0% 0%;
+    background-repeat: no-repeat;
+}
+
+.roach-info {
+    flex-grow: 1;
+}
+
+.roach-name {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 2px;
+}
+
+.roach-stats {
+    font-size: 13px;
+    color: #8892b0;
+}
+
+.roach-number {
+    font-size: 20px;
+    font-weight: 900;
+    color: #060810;
+    background: #00f0ff;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+}
+
+/* --- 2. НОВЫЙ БЛОК ВВОДА СТАВКИ --- */
+.bet-input-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 15px;
+    background: rgba(6, 8, 16, 0.8);
+    gap: 12px;
+}
+
+.bet-input-container label {
+    font-weight: bold;
+    color: #8892b0;
+    font-size: 16px;
+}
+
+.bet-input-container input {
+    background: #111827;
+    border: 2px solid #00f0ff;
+    color: #fbc531;
+    padding: 10px;
+    font-size: 18px;
+    font-weight: 900;
+    border-radius: 10px;
+    width: 100px;
+    text-align: center;
+    outline: none;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+}
+
+.bet-input-container input:focus {
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.6);
+}
+
+/* Убираем стрелочки (spinners) у input type="number" для эстетики */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+    -webkit-appearance: none; 
+    margin: 0; 
+}
+input[type=number] {
+    -moz-appearance: textfield;
+}
+/* ---------------------------------- */
+
+.bottom-menu {
+    background: #111827;
+    padding: 12px 15px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    border-top: 1px solid rgba(0, 240, 255, 0.2);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.icon-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    font-size: 22px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.action-btn {
+    flex-grow: 1;
+    background: #fbc531;
+    color: #060810;
+    border: none;
+    height: 50px;
+    font-size: 17px;
+    font-weight: 900;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #e1b12c;
+}
+
+.action-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 #e1b12c;
+}
+
+#result-screen {
+    background: rgba(6, 8, 16, 0.85);
+    backdrop-filter: blur(5px);
+    justify-content: center;
+    align-items: center;
+    z-index: 30;
+}
+
+.result-box {
+    background: #111827;
+    border: 2px solid #00f0ff;
+    padding: 25px 20px;
+    border-radius: 16px;
+    text-align: center;
+    width: 85%;
+    max-width: 320px;
+    box-shadow: 0 0 30px rgba(0, 240, 255, 0.2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#result-title {
+    font-size: 28px;
+    font-weight: 900;
+    margin-bottom: 12px;
+}
+
+#result-desc {
+    font-size: 15px;
+    line-height: 1.4;
+    color: #c5c6c7;
+    margin-bottom: 20px;
+}
+
+#restart-btn {
+    width: 100%;
+}
+
+#game-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #000;
+    z-index: 10;
+}
+
+#game-container canvas {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}

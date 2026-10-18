@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>3D Racer</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- ЭКРАН 1: МЕНЮ СТАВОК -->
+    <div id="bet-screen" class="screen">
+        
+        <!-- БЛОК: БАЛАНС И КНОПКИ STARS -->
+        <div class="header-panel">
+            <div class="balance-badge">Баланс: <span id="balance" style="color: #fbc531; font-size: 1.2em;">0</span> ⭐</div>
+            <div class="finance-actions">
+                <button id="deposit-stars-btn">Пополнить</button>
+                <button id="withdraw-stars-btn">Вывести</button>
+            </div>
+        </div>
+
+        <h1 class="main-title">ВЫБЕРИ ФАВОРИТА</h1>
+        
+        <div class="roach-grid">
+            <div class="roach-item selected" data-id="0">
+                <div class="roach-avatar" data-sprite="0"></div>
+                <div class="roach-info">
+                    <div class="roach-name" style="color: #ff5252">Шустрик</div>
+                    <div class="roach-stats">Кэф: x5</div>
+                </div>
+                <div class="roach-number">1</div>
+            </div>
+            <div class="roach-item" data-id="1">
+                <div class="roach-avatar" data-sprite="1"></div>
+                <div class="roach-info">
+                    <div class="roach-name" style="color: #34ace0">Броня</div>
+                    <div class="roach-stats">Кэф: x5</div>
+                </div>
+                <div class="roach-number">2</div>
+            </div>
+            <div class="roach-item" data-id="2">
+                <div class="roach-avatar" data-sprite="2"></div>
+                <div class="roach-info">
+                    <div class="roach-name" style="color: #33d9b2">Ураган</div>
+                    <div class="roach-stats">Кэф: x5</div>
+                </div>
+                <div class="roach-number">3</div>
+            </div>
+            <div class="roach-item" data-id="3">
+                <div class="roach-avatar" data-sprite="3"></div>
+                <div class="roach-info">
+                    <div class="roach-name" style="color: #ffb142">Босс</div>
+                    <div class="roach-stats">Кэф: x5</div>
+                </div>
+                <div class="roach-number">4</div>
+            </div>
+            <div class="roach-item" data-id="4">
+                <div class="roach-avatar" data-sprite="4"></div>
+                <div class="roach-info">
+                    <div class="roach-name" style="color: #706fd3">Метеор</div>
+                    <div class="roach-stats">Кэф: x5</div>
+                </div>
+                <div class="roach-number">5</div>
+            </div>
+        </div>
+
+        <!-- БЛОК: ВВОД СУММЫ СТАВКИ -->
+        <div class="bet-input-container">
+            <label for="bet-input">Ваша ставка:</label>
+            <input type="number" id="bet-input" value="1" min="1">
+        </div>
+
+        <!-- НИЖНЕЕ МЕНЮ -->
+        <div class="bottom-menu">
+            <button id="mute-btn" class="icon-btn">🔊</button>
+            <button id="start-bet-btn" class="action-btn">НАЧАТЬ ГОНКУ</button>
+        </div>
+    </div>
+
+    <!-- ЭКРАН 2: САМА ГОНКА -->
+    <div id="game-container" class="screen hidden">
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <!-- ЭКРАН 3: РЕЗУЛЬТАТ -->
+    <div id="result-screen" class="screen hidden">
+        <div class="result-box">
+            <h1 id="result-title">ПОБЕДА!</h1>
+            <p id="result-desc"></p>
+            <button id="restart-btn" class="action-btn">ИГРАТЬ ЕЩЕ</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
