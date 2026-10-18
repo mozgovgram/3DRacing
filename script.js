@@ -1,37 +1,9 @@
 const tg = window.Telegram?.WebApp;
 if (tg) tg.expand(); 
 
-// Получаем данные игрока из Telegram (если открыто в браузере для теста - берем заглушку)
-const tgUser = tg?.initDataUnsafe?.user || { id: 12345678, username: "TestPlayer" };
-
-// Твоя ссылка на Google Apps Script
-const SERVER_URL = "https://script.google.com/macros/s/AKfycby0Fv6EbSa9xn6fntoN_Xgcl6sBwKfl2_azYQHSONSt2QSG_S-qSS6NRvRNz61WmKMM/exec";
-
 function vibrate(style = 'light') {
     if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred(style);
     else if (navigator.vibrate) navigator.vibrate(style === 'heavy' ? 50 : 15);
-}
-
-// ---------------- 0. УНИВЕРСАЛЬНЫЙ ШЛЮЗ ДЛЯ ЗАПРОСОВ К GOOGLE APPS SCRIPT ----------------
-async function sendServerRequest(payload) {
-    const response = await fetch(SERVER_URL, {
-        method: 'POST',
-        mode: 'cors',
-        redirect: 'follow',
-        headers: {
-            'Content-Type': 'text/plain;charset=utf-8'
-        },
-        body: JSON.stringify(payload)
-    });
-
-    const textResult = await response.text();
-    
-    try {
-        return JSON.parse(textResult);
-    } catch (e) {
-        console.error("Ответ сервера не JSON:", textResult);
-        throw new Error("Ошибка ответа сервера: " + textResult);
-    }
 }
 
 // ---------------- 1. АВАТАРКИ И СПРАЙТЫ ----------------
@@ -190,25 +162,19 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-// Лимиты игры
+// Лимиты и стартовый тестовый баланс
 const MIN_BET = 1;
 const MIN_WITHDRAW = 25;
 
-let gameState = 'bet', balance = 0, betAmount = 1, selectedRoach = 0;
+let gameState = 'bet', balance = 100, betAmount = 1, selectedRoach = 0;
 let winnerId = -1, countdownValue = 0, countdownTimer = null;
 
-// Загружаем актуальный баланс с сервера при старте
-async function fetchBalance() {
-    try {
-        let data = await sendServerRequest({ action: "get_balance", userId: tgUser.id });
-        balance = data.balance || 0;
-        document.getElementById('balance').textContent = balance;
-    } catch (e) {
-        console.log("Ошибка загрузки баланса:", e);
-    }
+// Обновляем отображение баланса
+function updateBalanceUI() {
+    const balEl = document.getElementById('balance');
+    if (balEl) balEl.textContent = balance;
 }
-// Вызываем загрузку баланса сразу
-fetchBalance();
+updateBalanceUI();
 
 const segmentLength = 200;
 const trackSegments = 1400; 
@@ -479,7 +445,7 @@ function updateAndRender(timestamp) {
     requestAnimationFrame(updateAndRender);
 }
 
-// ---------------- 5. ОБРАБОТЧИКИ СОБЫТИЙ И ТРАНЗАЦИЙ ----------------
+// ---------------- 5. ОБРАБОТЧИКИ СОБЫТИЙ И ТРАНЗАЦИЙ (ЛОКАЛЬНО) ----------------
 
 // Выбор таракана
 document.querySelectorAll('.roach-item').forEach(card => {
@@ -492,7 +458,7 @@ document.querySelectorAll('.roach-item').forEach(card => {
     });
 });
 
-// Кнопка ВЫВОДА
+// Кнопка ВЫВОДА (Локальный заглушечный тест)
 document.getElementById('withdraw-stars-btn')?.addEventListener('click', () => {
     initAudio(); playClick(); vibrate('medium');
     
@@ -512,12 +478,13 @@ document.getElementById('withdraw-stars-btn')?.addEventListener('click', () => {
         return;
     }
 
-    alert(`Заявка на вывод ${amount} ⭐️ отправлена администратору!`);
-    fetchBalance();
+    balance -= amount;
+    updateBalanceUI();
+    alert(`Тестовый вывод ${amount} ⭐️ прошёл успешно!`);
 });
 
-// СТАРТ И СПИСАНИЕ СТАВКИ ЧЕРЕЗ СЕРВЕР
-document.getElementById('start-bet-btn')?.addEventListener('click', async () => {
+// СТАРТ ГОНКИ И СТАВКА (ЛОКАЛЬНО)
+document.getElementById('start-bet-btn')?.addEventListener('click', () => {
     initAudio();
     
     let betInput = document.getElementById('bet-input');
@@ -535,55 +502,29 @@ document.getElementById('start-bet-btn')?.addEventListener('click', async () => 
         return; 
     }
     
-    const btn = document.getElementById('start-bet-btn');
-    btn.disabled = true;
-    btn.textContent = "Ожидание...";
-
-    try {
-        let data = await sendServerRequest({ 
-            action: "bet", 
-            userId: tgUser.id, 
-            username: tgUser.username,
-            amount: betAmount 
-        });
-        
-        if (!data.success) {
-            alert("Ошибка списания: " + (data.error || "Сбой сервера"));
-            btn.disabled = false;
-            btn.textContent = "НАЧАТЬ ГОНКУ";
-            return;
+    // Списываем ставку локально
+    balance -= betAmount;
+    updateBalanceUI();
+    vibrate('medium');
+    
+    document.getElementById('bet-screen').classList.add('hidden');
+    document.getElementById('game-container').classList.remove('hidden');
+    roaches.forEach((r) => { r.z = 0; r.speed = 0; r.targetSpeed = 0; });
+    cameraZ = 0; particles = []; winnerId = -1; trackCurveAccumulation = 0; 
+    gameState = 'countdown'; countdownValue = 3;
+    playCountdown();
+    
+    countdownTimer = setInterval(() => {
+        countdownValue--;
+        if (countdownValue > 0) { playCountdown(); vibrate('light'); } 
+        else if (countdownValue === 0) { playGo(); vibrate('heavy'); } 
+        else {
+            clearInterval(countdownTimer);
+            gameState = 'racing';
+            roaches.forEach((r) => { r.speed = 100; r.targetSpeed = r.baseSpeed; });
+            startRaceMusic();
         }
-
-        balance = data.balance;
-        document.getElementById('balance').textContent = balance;
-        vibrate('medium');
-        
-        document.getElementById('bet-screen').classList.add('hidden');
-        document.getElementById('game-container').classList.remove('hidden');
-        roaches.forEach((r) => { r.z = 0; r.speed = 0; r.targetSpeed = 0; });
-        cameraZ = 0; particles = []; winnerId = -1; trackCurveAccumulation = 0; 
-        gameState = 'countdown'; countdownValue = 3;
-        playCountdown();
-        
-        countdownTimer = setInterval(() => {
-            countdownValue--;
-            if (countdownValue > 0) { playCountdown(); vibrate('light'); } 
-            else if (countdownValue === 0) { playGo(); vibrate('heavy'); } 
-            else {
-                clearInterval(countdownTimer);
-                gameState = 'racing';
-                roaches.forEach((r) => { r.speed = 100; r.targetSpeed = r.baseSpeed; });
-                startRaceMusic();
-            }
-        }, 1000);
-
-    } catch (e) {
-        alert("Ошибка связи с сервером! Попробуйте еще раз.");
-        console.error(e);
-    } finally {
-        btn.disabled = false;
-        btn.textContent = "НАЧАТЬ ГОНКУ";
-    }
+    }, 1000);
 });
 
 document.getElementById('restart-btn')?.addEventListener('click', () => {
@@ -594,30 +535,29 @@ document.getElementById('restart-btn')?.addEventListener('click', () => {
     gameState = 'bet'; particles = []; winnerId = -1; cameraZ = 0;
 });
 
-// ---------------- 6. ЛОГИКА МОДАЛЬНОГО ОКНА ПОПОЛНЕНИЯ ----------------
+// ---------------- 6. ЛОГИКА МОДАЛЬНОГО ОКНА ПОПОЛНЕНИЯ (ТЕСТОВЫЙ РЕЖИМ) ----------------
 const depositModal = document.getElementById('deposit-modal');
 const depositBtn = document.getElementById('deposit-stars-btn');
 const closeDepositBtn = document.getElementById('close-deposit-modal');
 const confirmDepositBtn = document.getElementById('confirm-deposit-btn');
 const depositAmountInput = document.getElementById('deposit-amount-input');
 
-// 1. Открытие модалки при клике на "Пополнить"
+// 1. Открытие модалки
 depositBtn?.addEventListener('click', () => {
     initAudio(); playClick(); vibrate('light');
     depositModal?.classList.remove('hidden');
 });
 
-// 2. Закрытие модалки на крестик
+// 2. Закрытие модалки
 closeDepositBtn?.addEventListener('click', () => {
     depositModal?.classList.add('hidden');
 });
 
-// 3. Закрытие при клике мимо окна (на темный фон)
 depositModal?.addEventListener('click', (e) => {
     if (e.target === depositModal) depositModal.classList.add('hidden');
 });
 
-// 4. Быстрый выбор суммы (5, 10, 25, 50)
+// 3. Быстрый выбор суммы
 document.querySelectorAll('.quick-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
         initAudio(); playClick(); vibrate('light');
@@ -628,8 +568,8 @@ document.querySelectorAll('.quick-btn').forEach(btn => {
     });
 });
 
-// 5. Нажатие на кнопку "ПОПОЛНИТЬ" внутри модалки -> вызов счета Telegram
-confirmDepositBtn?.addEventListener('click', async () => {
+// 4. Пополнение баланса напрямую (Без запросов к серверу)
+confirmDepositBtn?.addEventListener('click', () => {
     initAudio(); playClick();
     
     const amount = parseInt(depositAmountInput?.value || 0);
@@ -639,43 +579,16 @@ confirmDepositBtn?.addEventListener('click', async () => {
         return;
     }
 
-    confirmDepositBtn.disabled = true;
-    confirmDepositBtn.textContent = "Загрузка счета...";
-
-    try {
-        let data = await sendServerRequest({ 
-            action: "create_invoice", 
-            userId: tgUser.id,
-            amount: amount
-        });
-        
-        if (data.success && data.invoiceLink) {
-            depositModal.classList.add('hidden');
-            
-            tg.openInvoice(data.invoiceLink, (status) => {
-                if (status === 'paid') {
-                    vibrate('heavy');
-                    spawnFireworks();
-                    alert(`Успешно! Баланс пополнен на ${amount} ⭐️`);
-                    setTimeout(fetchBalance, 1500);
-                } else if (status === 'failed') {
-                    alert("Ошибка при вызове оплаты!");
-                }
-            });
-        } else {
-            alert("Ошибка создания счета: " + (data.error || "Проверьте версию скрипта"));
-        }
-    } catch (e) {
-        alert("Ошибка соединения с сервером! Подробности в консоли.");
-        console.error(e);
-    } finally {
-        confirmDepositBtn.disabled = false;
-        confirmDepositBtn.textContent = "ПОПОЛНИТЬ";
-    }
+    balance += amount;
+    updateBalanceUI();
+    depositModal?.classList.add('hidden');
+    vibrate('heavy');
+    spawnFireworks();
+    alert(`[ТЕСТ] Баланс пополнен на ${amount} ⭐️!`);
 });
 
-// КОНЕЦ ГОНКИ И ЗАЧИСЛЕНИЕ ВЫИГРЫША ЧЕРЕЗ СЕРВЕР
-async function endRace() {
+// КОНЕЦ ГОНКИ И ЗАЧИСЛЕНИЕ ВЫИГРЫША (ЛОКАЛЬНО)
+function endRace() {
     gameState = 'result'; 
     stopRaceMusic(true);
     
@@ -685,22 +598,8 @@ async function endRace() {
 
     if (winnerId === selectedRoach) {
         let winAmount = betAmount * 5; 
-        
-        try {
-            let data = await sendServerRequest({ 
-                action: "win", 
-                userId: tgUser.id, 
-                username: tgUser.username,
-                amount: winAmount 
-            });
-            
-            if (data.success) {
-                balance = data.balance;
-                document.getElementById('balance').textContent = balance;
-            }
-        } catch (e) {
-            console.error("Не удалось зачислить выигрыш на сервер", e);
-        }
+        balance += winAmount;
+        updateBalanceUI();
 
         setTimeout(() => {
             title.textContent = "ПОБЕДА! 🎉"; title.style.color = "#fbc531";
