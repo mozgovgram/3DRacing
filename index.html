@@ -93,6 +93,31 @@
         </div>
     </div>
 
+    <!-- МОДАЛЬНОЕ ОКНО ПОПОЛНЕНИЯ STARS -->
+    <div id="deposit-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <button id="close-deposit-modal" class="modal-close">&times;</button>
+            <h2 class="modal-title">ПОПОЛНЕНИЕ STARS ⭐️</h2>
+            <p class="modal-subtitle">Минимальное пополнение — 5 ⭐️</p>
+            
+            <!-- Быстрые кнопки суммы -->
+            <div class="quick-amounts">
+                <button class="quick-btn active" data-amount="5">5 ⭐️</button>
+                <button class="quick-btn" data-amount="10">10 ⭐️</button>
+                <button class="quick-btn" data-amount="25">25 ⭐️</button>
+                <button class="quick-btn" data-amount="50">50 ⭐️</button>
+            </div>
+
+            <!-- Ввод своей суммы -->
+            <div class="deposit-input-group">
+                <label for="deposit-amount-input">Сумма пополнения:</label>
+                <input type="number" id="deposit-amount-input" value="5" min="5">
+            </div>
+
+            <button id="confirm-deposit-btn" class="action-btn">ПОПОЛНИТЬ</button>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>

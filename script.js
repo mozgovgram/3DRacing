@@ -586,6 +586,93 @@ document.getElementById('restart-btn')?.addEventListener('click', () => {
     gameState = 'bet'; particles = []; winnerId = -1; cameraZ = 0;
 });
 
+// ---------------- 6. ЛОГИКА МОДАЛЬНОГО ОКНА ПОПОЛНЕНИЯ ----------------
+const depositModal = document.getElementById('deposit-modal');
+const depositBtn = document.getElementById('deposit-stars-btn');
+const closeDepositBtn = document.getElementById('close-deposit-modal');
+const confirmDepositBtn = document.getElementById('confirm-deposit-btn');
+const depositAmountInput = document.getElementById('deposit-amount-input');
+
+// 1. Открытие модалки при клике на "Пополнить"
+depositBtn?.addEventListener('click', () => {
+    initAudio(); playClick(); vibrate('light');
+    depositModal?.classList.remove('hidden');
+});
+
+// 2. Закрытие модалки на крестик
+closeDepositBtn?.addEventListener('click', () => {
+    depositModal?.classList.add('hidden');
+});
+
+// 3. Закрытие при клике мимо окна (на темный фон)
+depositModal?.addEventListener('click', (e) => {
+    if (e.target === depositModal) depositModal.classList.add('hidden');
+});
+
+// 4. Быстрый выбор суммы (5, 10, 25, 50)
+document.querySelectorAll('.quick-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        initAudio(); playClick(); vibrate('light');
+        const val = e.currentTarget.dataset.amount;
+        if (depositAmountInput) depositAmountInput.value = val;
+        document.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+    });
+});
+
+// 5. Нажатие на кнопку "ПОПОЛНИТЬ" внутри модалки -> вызов счета Telegram
+confirmDepositBtn?.addEventListener('click', async () => {
+    initAudio(); playClick();
+    
+    const amount = parseInt(depositAmountInput?.value || 0);
+    if (isNaN(amount) || amount < 5) {
+        vibrate('heavy');
+        alert("Минимальная сумма пополнения — 5 ⭐️!");
+        return;
+    }
+
+    confirmDepositBtn.disabled = true;
+    confirmDepositBtn.textContent = "Загрузка счета...";
+
+    try {
+        // Просим Google Таблицу сгенерировать ссылку на чек
+        let response = await fetch(SERVER_URL, {
+            method: 'POST',
+            body: JSON.stringify({ 
+                action: "create_invoice", 
+                userId: tgUser.id,
+                amount: amount
+            })
+        });
+        
+        let data = await response.json();
+        
+        if (data.success && data.invoiceLink) {
+            depositModal.classList.add('hidden'); // прячем модалку
+            
+            // Вызываем родную шторку оплаты Телеграма!
+            tg.openInvoice(data.invoiceLink, (status) => {
+                if (status === 'paid') {
+                    vibrate('heavy');
+                    spawnFireworks();
+                    alert(`Успешно! Баланс пополнен на ${amount} ⭐️`);
+                    setTimeout(fetchBalance, 1500); // Обновляем баланс с сервера
+                } else if (status === 'failed') {
+                    alert("Ошибка при вызове оплаты!");
+                }
+            });
+        } else {
+            alert("Ошибка создания счета: " + (data.error || "Проверьте скрипт"));
+        }
+    } catch (e) {
+        alert("Ошибка соединения с сервером!");
+        console.error(e);
+    } finally {
+        confirmDepositBtn.disabled = false;
+        confirmDepositBtn.textContent = "ПОПОЛНИТЬ";
+    }
+});
+
 // КОНЕЦ ГОНКИ И ЗАЧИСЛЕНИЕ ВЫИГРЫША ЧЕРЕЗ СЕРВЕР
 async function endRace() {
     gameState = 'result'; 
