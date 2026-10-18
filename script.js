@@ -625,46 +625,56 @@ document.querySelectorAll('.quick-btn').forEach(btn => {
     });
 });
 
-// 4. Пополнение реально через Telegram Stars Invoice
+// 4. Пополнение реально через Telegram Stars Invoice (ОТЛАДОЧНАЯ ВЕРСИЯ)
 confirmDepositBtn?.addEventListener('click', async () => {
+    // ШАГ 1: Проверка нажатия
+    alert("ШАГ 1: Кнопка нажата. Инициализация...");
     initAudio(); playClick();
     
     const amount = parseInt(depositAmountInput?.value || 0);
     if (isNaN(amount) || amount < 5) {
         vibrate('heavy');
-        alert("Минимальная сумма пополнения — 5 ⭐️!");
+        alert("ОШИБКА: Сумма должна быть не менее 5 ⭐️!");
         return;
     }
 
     confirmDepositBtn.disabled = true;
-    confirmDepositBtn.textContent = "Загрузка счета...";
+    confirmDepositBtn.textContent = "Загрузка...";
 
     try {
+        // ШАГ 2: Отправка запроса
+        alert(`ШАГ 2: Отправляем запрос на сервер...\nUser ID: ${tgUser.id}\nСумма: ${amount}`);
+        
         let data = await sendServerRequest({ 
             action: "create_invoice", 
             userId: tgUser.id,
             amount: amount
         });
         
+        // ШАГ 3: Проверка ответа сервера (САМОЕ ВАЖНОЕ!)
+        alert("ШАГ 3: Ответ от сервера:\n" + JSON.stringify(data, null, 2));
+        
         if (data.success && data.invoiceLink) {
+            // ШАГ 4: Попытка открытия
+            alert(`ШАГ 4: Ссылка получена! Пытаемся открыть:\n${data.invoiceLink}`);
             depositModal.classList.add('hidden');
             
-            // Вызываем родную шторку оплаты Telegram
             tg.openInvoice(data.invoiceLink, (status) => {
+                alert(`ШАГ 5: Статус инвойса Telegram: ${status}`);
                 if (status === 'paid') {
                     vibrate('heavy');
                     spawnFireworks();
-                    alert(`Успешно! Баланс пополнен на ${amount} ⭐️`);
-                    setTimeout(fetchBalance, 1500); // Обновляем баланс
-                } else if (status === 'failed') {
-                    alert("Ошибка или отмена оплаты!");
+                    alert(`✅ Успешно! Баланс пополнен на ${amount} ⭐️`);
+                    setTimeout(fetchBalance, 1500);
+                } else if (status === 'failed' || status === 'cancelled') {
+                    alert("❌ Оплата отменена или не завершена.");
                 }
             });
         } else {
-            alert("Ошибка создания счета: " + (data.error || "Проверьте версию Google Apps Script"));
+            alert(`❌ ОШИБКА СЕРВЕРА:\n${data.error || "Сервер не вернул invoiceLink. Проверьте код Google Apps Script."}`);
         }
     } catch (e) {
-        alert("Ошибка соединения с сервером! Подробности в консоли.");
+        alert(`❌ КРИТИЧЕСКАЯ ОШИБКА СЕТИ:\n${e.message}\n\nПроверьте, что SERVER_URL заканчивается на /exec`);
         console.error(e);
     } finally {
         confirmDepositBtn.disabled = false;
