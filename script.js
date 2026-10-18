@@ -12,6 +12,28 @@ function vibrate(style = 'light') {
     else if (navigator.vibrate) navigator.vibrate(style === 'heavy' ? 50 : 15);
 }
 
+// ---------------- 0. УНИВЕРСАЛЬНЫЙ ШЛЮЗ ДЛЯ ЗАПРОСОВ К GOOGLE APPS SCRIPT ----------------
+async function sendServerRequest(payload) {
+    const response = await fetch(SERVER_URL, {
+        method: 'POST',
+        mode: 'cors',
+        redirect: 'follow',
+        headers: {
+            'Content-Type': 'text/plain;charset=utf-8'
+        },
+        body: JSON.stringify(payload)
+    });
+
+    const textResult = await response.text();
+    
+    try {
+        return JSON.parse(textResult);
+    } catch (e) {
+        console.error("Ответ сервера не JSON:", textResult);
+        throw new Error("Ошибка ответа сервера: " + textResult);
+    }
+}
+
 // ---------------- 1. АВАТАРКИ И СПРАЙТЫ ----------------
 const roachSprites = [];
 const spriteNames = ['bugs1.png', 'bugs2.png', 'bugs3.png', 'bugs4.png', 'bugs5.png'];
@@ -178,11 +200,7 @@ let winnerId = -1, countdownValue = 0, countdownTimer = null;
 // Загружаем актуальный баланс с сервера при старте
 async function fetchBalance() {
     try {
-        let response = await fetch(SERVER_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: "get_balance", userId: tgUser.id })
-        });
-        let data = await response.json();
+        let data = await sendServerRequest({ action: "get_balance", userId: tgUser.id });
         balance = data.balance || 0;
         document.getElementById('balance').textContent = balance;
     } catch (e) {
@@ -494,9 +512,8 @@ document.getElementById('withdraw-stars-btn')?.addEventListener('click', () => {
         return;
     }
 
-    // Пока просто имитируем отправку заявки и переспрашиваем баланс
     alert(`Заявка на вывод ${amount} ⭐️ отправлена администратору!`);
-    fetchBalance(); // Обновляем баланс с сервера, чтобы избежать рассинхрона
+    fetchBalance();
 });
 
 // СТАРТ И СПИСАНИЕ СТАВКИ ЧЕРЕЗ СЕРВЕР
@@ -518,38 +535,29 @@ document.getElementById('start-bet-btn')?.addEventListener('click', async () => 
         return; 
     }
     
-    // Блокируем кнопку, чтобы не нажали дважды
     const btn = document.getElementById('start-bet-btn');
     btn.disabled = true;
     btn.textContent = "Ожидание...";
 
     try {
-        // Отправляем ставку в Гугл Таблицу
-        let response = await fetch(SERVER_URL, {
-            method: 'POST',
-            body: JSON.stringify({ 
-                action: "bet", 
-                userId: tgUser.id, 
-                username: tgUser.username,
-                amount: betAmount 
-            })
+        let data = await sendServerRequest({ 
+            action: "bet", 
+            userId: tgUser.id, 
+            username: tgUser.username,
+            amount: betAmount 
         });
         
-        let data = await response.json();
-        
         if (!data.success) {
-            alert("Ошибка списания: " + data.error);
+            alert("Ошибка списания: " + (data.error || "Сбой сервера"));
             btn.disabled = false;
             btn.textContent = "НАЧАТЬ ГОНКУ";
             return;
         }
 
-        // Обновляем баланс локально, если сервер разрешил
         balance = data.balance;
         document.getElementById('balance').textContent = balance;
         vibrate('medium');
         
-        // Начинаем гонку
         document.getElementById('bet-screen').classList.add('hidden');
         document.getElementById('game-container').classList.remove('hidden');
         roaches.forEach((r) => { r.z = 0; r.speed = 0; r.targetSpeed = 0; });
@@ -635,37 +643,30 @@ confirmDepositBtn?.addEventListener('click', async () => {
     confirmDepositBtn.textContent = "Загрузка счета...";
 
     try {
-        // Просим Google Таблицу сгенерировать ссылку на чек
-        let response = await fetch(SERVER_URL, {
-            method: 'POST',
-            body: JSON.stringify({ 
-                action: "create_invoice", 
-                userId: tgUser.id,
-                amount: amount
-            })
+        let data = await sendServerRequest({ 
+            action: "create_invoice", 
+            userId: tgUser.id,
+            amount: amount
         });
         
-        let data = await response.json();
-        
         if (data.success && data.invoiceLink) {
-            depositModal.classList.add('hidden'); // прячем модалку
+            depositModal.classList.add('hidden');
             
-            // Вызываем родную шторку оплаты Телеграма!
             tg.openInvoice(data.invoiceLink, (status) => {
                 if (status === 'paid') {
                     vibrate('heavy');
                     spawnFireworks();
                     alert(`Успешно! Баланс пополнен на ${amount} ⭐️`);
-                    setTimeout(fetchBalance, 1500); // Обновляем баланс с сервера
+                    setTimeout(fetchBalance, 1500);
                 } else if (status === 'failed') {
                     alert("Ошибка при вызове оплаты!");
                 }
             });
         } else {
-            alert("Ошибка создания счета: " + (data.error || "Проверьте скрипт"));
+            alert("Ошибка создания счета: " + (data.error || "Проверьте версию скрипта"));
         }
     } catch (e) {
-        alert("Ошибка соединения с сервером!");
+        alert("Ошибка соединения с сервером! Подробности в консоли.");
         console.error(e);
     } finally {
         confirmDepositBtn.disabled = false;
@@ -686,17 +687,12 @@ async function endRace() {
         let winAmount = betAmount * 5; 
         
         try {
-            // Отправляем победу в гугл таблицу
-            let response = await fetch(SERVER_URL, {
-                method: 'POST',
-                body: JSON.stringify({ 
-                    action: "win", 
-                    userId: tgUser.id, 
-                    username: tgUser.username,
-                    amount: winAmount 
-                })
+            let data = await sendServerRequest({ 
+                action: "win", 
+                userId: tgUser.id, 
+                username: tgUser.username,
+                amount: winAmount 
             });
-            let data = await response.json();
             
             if (data.success) {
                 balance = data.balance;
