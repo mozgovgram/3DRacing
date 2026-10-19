@@ -5,7 +5,7 @@ if (tg) tg.expand();
 const tgUser = tg?.initDataUnsafe?.user || { id: 12345678, username: "TestPlayer" };
 
 // Актуальная ссылка на твое веб-приложение Google Apps Script
-const SERVER_URL = "https://script.google.com/macros/s/AKfycby0Fv6EbSa9xn6fntoN_Xgcl6sBwKfl2_azYQHSoNSt2QSG_S-qSS6NRvRNz61WmKMM/exec";
+const SERVER_URL = "https://script.google.com/macros/s/AKfycbzCg0RGIoz-DllCfroEQShTFZeE-nSWpAq0r-6hUdcPermh5qAWezt6lEPVDWsbs2Aw/exec";
 
 function vibrate(style = 'light') {
     if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred(style);
@@ -629,6 +629,7 @@ document.querySelectorAll('.quick-btn').forEach(btn => {
 confirmDepositBtn?.addEventListener('click', async () => {
     initAudio(); 
     playClick();
+    vibrate('light');
     
     const amount = parseInt(depositAmountInput?.value || 0);
     if (isNaN(amount) || amount < 5) {
@@ -657,14 +658,14 @@ confirmDepositBtn?.addEventListener('click', async () => {
                     alert(`✅ Успешно! Баланс пополнен на ${amount} ⭐️`);
                     setTimeout(fetchBalance, 1500);
                 } else if (status === 'failed' || status === 'cancelled') {
-                    alert(" Оплата отменена или не завершена");
+                    alert("Оплата отменена или не завершена");
                 }
             });
         } else {
-            alert("❌ Ошибка: " + (data.error || "Не удалось создать счет"));
+            alert("Ошибка: " + (data.error || "Не удалось создать счет"));
         }
     } catch (e) {
-        alert("❌ Ошибка соединения с сервером");
+        alert("Ошибка соединения с сервером");
         console.error(e);
     } finally {
         confirmDepositBtn.disabled = false;
