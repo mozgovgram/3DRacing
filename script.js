@@ -5,7 +5,7 @@ if (tg) tg.expand();
 const tgUser = tg?.initDataUnsafe?.user || { id: 12345678, username: "TestPlayer" };
 
 // Актуальная ссылка на твое веб-приложение Google Apps Script
-const SERVER_URL = "https://script.google.com/macros/s/AKfycbwrqxj1cw2_nUCecGorBjwk8fivsaNyLh-ueYejPYyD9Zq6vamBiuE7mytzQMN-5lgo/exec";
+const SERVER_URL = "https://script.google.com/macros/s/AKfycbzvw85jOCv__i50Hj80n-4dyv0X-uIK7_qDTTdMSNCcmj1-sCYY9cCj97r9I2qLr6V2/exec";
 
 function vibrate(style = 'light') {
     if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred(style);
@@ -632,7 +632,7 @@ confirmDepositBtn?.addEventListener('click', async () => {
     vibrate('light');
     
     const amount = parseInt(depositAmountInput?.value || 0);
-    if (isNaN(amount) || amount < 5) {
+    if (isNaN(amount) || amount < 1) {
         vibrate('heavy');
         alert("Минимальная сумма пополнения — 5 ⭐️!");
         return;
